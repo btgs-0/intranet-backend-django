@@ -13,7 +13,7 @@ Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.contrib import admin
 from rest_framework import routers
 from playlist import views
@@ -21,10 +21,10 @@ from session.views import UserViewSet, MigrateAndLogin
 from catalogue.views import ReleaseViewSet, TrackViewSet, ArtistViewSet, CommentViewSet
 from downloads import views as downloadViews
 from supporters import views as supporterViews
-from django.conf.urls import url
-from rest_framework_swagger.views import get_swagger_view
+from django.urls import re_path
+# from rest_framework_swagger.views import get_swagger_view
 
-schema_view = get_swagger_view(title="Intranet")
+#schema_view = get_swagger_view(title="Intranet")
 
 router = routers.DefaultRouter()
 router.register(r'releases', ReleaseViewSet, 'release')
@@ -43,10 +43,10 @@ router.register(r'transactions', supporterViews.TransactionViewSet, 'Transaction
 
 urlpatterns = [
     #url(r'^api-token-auth/', 'rest_framework.authtoken.views.obtain_auth_token'),
-    url(r'^auth', MigrateAndLogin.as_view()),
-    url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(router.urls)),
-    url(r'^logger/', include('playlist.urls')),
-    url(r'^download/([a-f0-9\-]+)', downloadViews.download),
-    url(r'^swagger', schema_view)
+    re_path(r'^auth', MigrateAndLogin.as_view()),
+    re_path(r'^admin/', admin.site.urls),
+    re_path(r'^api/', include(router.urls)),
+    re_path(r'^logger/', include('playlist.urls')),
+    re_path(r'^download/([a-f0-9\-]+)', downloadViews.download)
+    #re_path(r'^swagger', schema_view)
 ]
