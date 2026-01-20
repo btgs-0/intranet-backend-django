@@ -15,14 +15,17 @@ Including another URLconf
 """
 from django.conf.urls import include
 from django.contrib import admin
-from rest_framework import routers
+from rest_framework import routers, permissions
+# Source - https://stackoverflow.com/a
+# Posted by masnun, modified by community. See post 'Timeline' for change history
+# Retrieved 2026-01-20, License - CC BY-SA 3.0
+from rest_framework.authtoken import views as auth_views
 from playlist import views
 from session.views import UserViewSet, MigrateAndLogin
 from catalogue.views import ReleaseViewSet, TrackViewSet, ArtistViewSet, CommentViewSet
 from downloads import views as downloadViews
 from supporters import views as supporterViews
 from django.urls import re_path
-from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -55,11 +58,11 @@ router.register(r'supporters', supporterViews.SupporterViewSet, 'Supporter')
 router.register(r'transactions', supporterViews.TransactionViewSet, 'Transaction')
 
 urlpatterns = [
-    #re_path(r'^api-token-auth/', 'rest_framework.authtoken.views.obtain_auth_token'),
+    re_path(r'^api-token-auth/', auth_views.obtain_auth_token),
     re_path(r'^auth', MigrateAndLogin.as_view()),
     re_path(r'^admin/', admin.site.urls),
     re_path(r'^api/', include(router.urls)),
     re_path(r'^logger/', include('playlist.urls')),
     re_path(r'^download/([a-f0-9\-]+)', downloadViews.download),
-    re_path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
+    re_path(r'^swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
 ]
