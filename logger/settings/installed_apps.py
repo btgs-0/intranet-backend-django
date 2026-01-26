@@ -14,6 +14,7 @@ INSTALLED_APPS = (
     'djangobower',
     'drf_yasg',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'catalogue',
     'downloads',
