@@ -11,33 +11,30 @@ wordpress_user = settings.WORDPRESS_USER
 wordpress_password = settings.WORDPRESS_API_KEY
 wordpress_credentials = wordpress_user + ":" + wordpress_password
 wordpress_token = base64.b64encode(wordpress_credentials.encode())
-wordpress_header = {'Authorization': 'Basic ' + wordpress_token.decode('utf-8')}
 
-''' Finds the category for this show, nil otherwise '''
-def find_category_for_show(showName):
-  api_url = 'https://www.threedradio.com/wp-json/wp/v2/categories?parent=' + str(base_category) + '&search=' + showName
-  response = requests.get(api_url)
+wordpress_header = {
+    'Authorization': 'Basic ' + wordpress_token.decode('utf-8'),
+    'user-agent': 'threedradio-api',
+    'accept': 'application/json'
+}
+
+headers = {'user-agent': 'threedradio-api', 'accept': 'application/json'}
+
+''' Finds the website's show for this playlist '''
+def find_show_for_playlist(showName):
+  api_url = 'https://www.threedradio.com/wp-json/wp/v2/program?search=' + urllib.parse.quote_plus(showName)
+  response = requests.get(api_url, headers=headers)
   response_json = response.json()
   if response_json:
     return response_json[0]
 
-def create_category_for_show(showName):
-  api_url = 'https://www.threedradio.com/wp-json/wp/v2/categories'
-  data = {
-    'name' : showName,
-    'description': 'Show playlists for ' + showName,
-    'parent': base_category
-  }
-  response = requests.post(api_url,headers=wordpress_header, json=data)
-  return response.json()
 
-def createPost(title, categoryId, content, date):
-  api_url = 'https://www.threedradio.com/wp-json/wp/v2/posts'
+def createPost(title, showSlug, content, date):
+  api_url = 'https://www.threedradio.com/wp-json/wp/v2/program-playlist?program_slug=' + showSlug
   data = {
     'title' : title,
     'status': 'publish',
     'content': content,
-    'categories': [categoryId],
     'date': date
   }
   response = requests.post(api_url,headers=wordpress_header, json=data)
@@ -56,13 +53,13 @@ def playlist_to_wordpress(sender, instance, **kwargs):
     elif instance.complete == False:
       print('Playlist not complete yet')
     else:
-      category = find_category_for_show(instance.show.name)
+      wpShow= find_show_for_playlist(instance.show.name)
 
-      if category:
+      if wpShow:
         print('Found category ' + str(category['id']))
       else:
-        print('No category found, creating')
-        category = create_category_for_show(instance.show.name)
+        print('No category found, bailing')
+        return
 
       content = '<ol>\n'
       for track in instance.tracks.all().order_by('index'):
@@ -71,10 +68,12 @@ def playlist_to_wordpress(sender, instance, **kwargs):
 
       timestamp = str(instance.date) + ' ' + str(instance.show.endTime)
 
-      createPost(instance.show.name + ': ' + str(instance.date), category['id'], content, timestamp)
+      createPost(instance.show.name + ': ' + str(instance.date), wpShow['slug'], content, timestamp)
       instance.published = True
       instance.save()
   except Exception as e:
     print('Could not upload playlist')
     print(e)
+    print(traceback.format_exc())
+
     
