@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from .models import Playlist 
 import requests
 import base64
+import urllib
 from django.conf import settings
 
 base_category = 167
@@ -38,6 +39,7 @@ def createPost(title, showSlug, content, date):
     'date': date
   }
   response = requests.post(api_url,headers=wordpress_header, json=data)
+  print(response)
 
   
 @receiver(post_save, sender=Playlist)
@@ -56,9 +58,9 @@ def playlist_to_wordpress(sender, instance, **kwargs):
       wpShow= find_show_for_playlist(instance.show.name)
 
       if wpShow:
-        print('Found category ' + str(category['id']))
+        print('Found Wordpress Show: ' + str(category['id']))
       else:
-        print('No category found, bailing')
+        print('No show found, bailing')
         return
 
       content = '<ol>\n'
@@ -68,7 +70,9 @@ def playlist_to_wordpress(sender, instance, **kwargs):
 
       timestamp = str(instance.date) + ' ' + str(instance.show.endTime)
 
+      print('Publishing playlist...')
       createPost(instance.show.name + ': ' + str(instance.date), wpShow['slug'], content, timestamp)
+      print('Published!')
       instance.published = True
       instance.save()
   except Exception as e:
