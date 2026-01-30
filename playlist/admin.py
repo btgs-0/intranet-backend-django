@@ -17,6 +17,7 @@ class PlaylistEntryAdmin(admin.ModelAdmin):
 
 class PlaylistAdmin(admin.ModelAdmin):
     inlines = [PlaylistEntryInline]
+    list_display = ('show','date','complete','published')
 
 
 class ShowAdmin(admin.ModelAdmin):
