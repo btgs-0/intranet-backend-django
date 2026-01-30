@@ -6,8 +6,6 @@ import base64
 import urllib
 from django.conf import settings
 
-base_category = 167
-
 wordpress_user = settings.WORDPRESS_USER
 wordpress_password = settings.WORDPRESS_API_KEY
 wordpress_credentials = wordpress_user + ":" + wordpress_password
@@ -30,13 +28,16 @@ def find_show_for_playlist(showName):
     return response_json[0]
 
 
-def createPost(title, showSlug, content, date):
-  api_url = 'https://www.threedradio.com/wp-json/wp/v2/program-playlist?program_slug=' + showSlug
+def createPost(title, showId, content, date ):
+  api_url = 'https://www.threedradio.com/wp-json/wp/v2/program-playlist'
   data = {
     'title' : title,
     'status': 'publish',
     'content': content,
-    'date': date
+    'date': date,
+    'program': [
+      showId
+    ]
   }
   response = requests.post(api_url,headers=wordpress_header, json=data)
   print(response)
@@ -58,26 +59,25 @@ def playlist_to_wordpress(sender, instance, **kwargs):
       wpShow= find_show_for_playlist(instance.show.name)
 
       if wpShow:
-        print('Found Wordpress Show: ' + str(category['id']))
+        print('Found Wordpress Show: ' + str(wpShow['slug']))
       else:
         print('No show found, bailing')
         return
 
-      content = '<ol>\n'
+      content = '<ol>'
       for track in instance.tracks.all().order_by('index'):
-        content += '  <li>' + track.artist + ' - ' + track.title + '</li>\n'
-      content += '</ol>\n'
+        content += '<li>' + track.artist + ' - ' + track.title + '</li>\n'
+      content += '</ol>'
 
       timestamp = str(instance.date) + ' ' + str(instance.show.endTime)
 
       print('Publishing playlist...')
-      createPost(instance.show.name + ': ' + str(instance.date), wpShow['slug'], content, timestamp)
+      createPost(instance.show.name + ': ' + str(instance.date), wpShow['id'], content, timestamp)
       print('Published!')
       instance.published = True
       instance.save()
   except Exception as e:
     print('Could not upload playlist')
     print(e)
-    print(traceback.format_exc())
 
     
