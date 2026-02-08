@@ -32,7 +32,7 @@ class ArtistViewSet(viewsets.ViewSet):
     search_fields = ('artist', )
 
     def list(self, request):
-        searchParam = self.request.query_params.get('term')
+        searchParam = self.request.query_params.get('search')
         if searchParam is None:
             artists = [
                 release.artist
