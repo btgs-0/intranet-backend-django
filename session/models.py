@@ -25,10 +25,10 @@ class OldUser(models.Model):
     password = models.CharField(max_length=100, blank=True, null=True)
     first = models.CharField(max_length=100, blank=True, null=True)
     last = models.CharField(max_length=100, blank=True, null=True)
-    admin = models.NullBooleanField()
-    active = models.NullBooleanField()
-    cdeditor = models.NullBooleanField()
-    adminbook = models.NullBooleanField()
+    admin = models.BooleanField(null=True, blank=True)
+    active = models.BooleanField(null=True, blank=True)
+    cdeditor = models.BooleanField(null=True, blank=True)
+    adminbook = models.BooleanField(null=True, blank=True)
 
     class Meta:
         managed = False

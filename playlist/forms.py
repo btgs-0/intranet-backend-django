@@ -1,15 +1,15 @@
 import datetime
 
 from django import forms
-from datetimewidget.widgets import DateWidget
+# from datetimewidget.widgets import DateWidget
 from django.forms.widgets import TextInput, CheckboxInput, Textarea
 
 from .models import PlaylistEntry, Playlist, Show
 
 
 class SummaryReportForm(forms.Form):
-    startDate = forms.DateField(label='Start Date', widget=DateWidget(usel10n=True, bootstrap_version=3))
-    endDate = forms.DateField(label='End Date', widget=DateWidget(usel10n=True, bootstrap_version=3))
+    #startDate = forms.DateField(label='Start Date', widget=DateWidget(usel10n=True, bootstrap_version=3))
+    #endDate = forms.DateField(label='End Date', widget=DateWidget(usel10n=True, bootstrap_version=3))
     reportFormat = forms.ChoiceField(label="Report Format", choices = (('top20', 'Top 20+1'),('apra', 'APRA')))
 
     def clean(self):

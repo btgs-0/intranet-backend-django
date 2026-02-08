@@ -5,26 +5,42 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 Examples:
 Function views
     1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
+    2. Add a URL to urlpatterns:  re_path(r'^$', views.home, name='home')
 Class-based views
     1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
+    2. Add a URL to urlpatterns:  re_path(r'^$', Home.as_view(), name='home')
 Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
-    2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
+    2. Add a URL to urlpatterns:  re_path(r'^blog/', include(blog_urls))
 """
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.contrib import admin
-from rest_framework import routers
+from rest_framework import routers, permissions
+# Source - https://stackoverflow.com/a
+# Posted by masnun, modified by community. See post 'Timeline' for change history
+# Retrieved 2026-01-20, License - CC BY-SA 3.0
+from rest_framework.authtoken import views as auth_views
 from playlist import views
 from session.views import UserViewSet, MigrateAndLogin
 from catalogue.views import ReleaseViewSet, TrackViewSet, ArtistViewSet, CommentViewSet
 from downloads import views as downloadViews
 from supporters import views as supporterViews
-from django.conf.urls import url
-from rest_framework_swagger.views import get_swagger_view
+from django.urls import re_path
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
-schema_view = get_swagger_view(title="Intranet")
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Three D Radio Backend API",
+      default_version='v1',
+      #description="",
+      #terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="tech@threedradio.com"),
+      #license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
 router = routers.DefaultRouter()
 router.register(r'releases', ReleaseViewSet, 'release')
@@ -42,11 +58,11 @@ router.register(r'supporters', supporterViews.SupporterViewSet, 'Supporter')
 router.register(r'transactions', supporterViews.TransactionViewSet, 'Transaction')
 
 urlpatterns = [
-    #url(r'^api-token-auth/', 'rest_framework.authtoken.views.obtain_auth_token'),
-    url(r'^auth', MigrateAndLogin.as_view()),
-    url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(router.urls)),
-    url(r'^logger/', include('playlist.urls')),
-    url(r'^download/([a-f0-9\-]+)', downloadViews.download),
-    url(r'^swagger', schema_view)
+    re_path(r'^api-token-auth/', auth_views.obtain_auth_token),
+    re_path(r'^auth', MigrateAndLogin.as_view()),
+    re_path(r'^admin/', admin.site.urls),
+    re_path(r'^api/', include(router.urls)),
+    re_path(r'^logger/', include('playlist.urls')),
+    re_path(r'^download/([a-f0-9\-]+)', downloadViews.download),
+    re_path(r'^swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
 ]
