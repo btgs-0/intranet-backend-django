@@ -47,7 +47,7 @@ ROOT_URLCONF = 'logger.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, "templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,12 +76,11 @@ REST_FRAMEWORK = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 STATICFILES_FINDERS = {
         'django.contrib.staticfiles.finders.FileSystemFinder',
-            'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
         'djangobower.finders.BowerFinder',
 }
 BOWER_COMPONENTS_ROOT=os.path.join(BASE_DIR,'components')

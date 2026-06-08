@@ -70,6 +70,7 @@ RUN chmod -R 777 /var/lock/apache2
 RUN chmod -R 777 /etc/apache2
 RUN chmod -R 777 /app
 RUN chmod -R 777 /home/appuser
+RUN chown -R 10001:10001 /app
 
 # Add server config
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -84,11 +85,12 @@ COPY ./intranet-backend.conf /etc/apache2/sites-available/intranet-backend.conf
 # IF YOU RUN INTO PERMISSIONS ISSUES
 # See UID above, it's 10001
 # DO chown 10001 <path-to-cert> 
-# DO chown 10001 <path-to-key> 
-USER appuser
+# DO chown 10001 <path-to-key>
 
 # Copy the source code into the container.
 COPY . .
+RUN python3 /app/manage.py collectstatic --noinput
+USER appuser
 
 # Expose the port that the application listens on.
 EXPOSE 8001
@@ -97,5 +99,4 @@ EXPOSE 8001
 RUN a2enmod status && a2enmod lbmethod_byrequests && a2enmod ssl && a2enmod rewrite
 RUN a2dissite 000-default.conf 
 RUN a2ensite intranet-backend.conf
-RUN python3 /app/manage.py collectstatic --noinput
 CMD ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
