@@ -5,9 +5,9 @@
 # https://docs.docker.com/go/dockerfile-reference/
 
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
-ARG PYTHON_VERSION=3.6.15
-FROM python:${PYTHON_VERSION}-slim as base
+ARG DJANGO_ENV=staging
+ARG PYTHON_VERSION=3.9.25
+FROM python:${PYTHON_VERSION}-slim AS base
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -60,17 +60,18 @@ RUN cp /usr/lib/apache2/modules/mod_wsgi.so /etc/apache2/modules/mod_wsgi.so
 WORKDIR /app
 
 # Add the logging dir
-RUN mkdir -p /var/log/apache2
-RUN mkdir -p /var/run/apache2
-RUN mkdir -p /var/lock/apache2
-RUN chmod -R 777 /var/log/apache2
-RUN chmod -R 777 /var/lib/apache2
-RUN chmod -R 777 /var/run/apache2
-RUN chmod -R 777 /var/lock/apache2
-RUN chmod -R 777 /etc/apache2
-RUN chmod -R 777 /app
-RUN chmod -R 777 /home/appuser
-RUN chown -R 10001:10001 /app
+RUN mkdir -p /var/log/apache2 && \
+    mkdir -p /var/lib/apache2 && \
+    mkdir -p /var/run/apache2 && \
+    mkdir -p /var/lock/apache2 && \
+    chown -R appuser:appuser /var/log/apache2 && \
+    chown -R appuser:appuser /var/lib/apache2 && \
+    chown -R appuser:appuser /var/run/apache2 && \
+    chown -R appuser:appuser /var/lock/apache2 && \
+    chmod -R 777 /etc/apache2 && \
+    chmod -R 777 /app && \
+    chmod -R 777 /home/appuser && \
+    chmod 1777 /var/run/apache2
 
 # Add server config
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -81,6 +82,11 @@ RUN echo "LogLevel debug" >> /etc/apache2/apache2.conf
 # copy the backend configuration to the container's sites list.
 COPY ./intranet-backend.conf /etc/apache2/sites-available/intranet-backend.conf
 
+FROM base AS django-staging
+COPY /html/admin/base_site.staging.html /app/templates/admin/base_site.html
+COPY /html/admin/custom_admin.staging.css /app/static/admin/css/custom_admin.css
+
+FROM base AS django-production
 # Switch to the non-privileged user to run the application.
 # IF YOU RUN INTO PERMISSIONS ISSUES
 # See UID above, it's 10001
@@ -88,15 +94,17 @@ COPY ./intranet-backend.conf /etc/apache2/sites-available/intranet-backend.conf
 # DO chown 10001 <path-to-key>
 
 # Copy the source code into the container.
-COPY . .
+FROM django-${DJANGO_ENV} AS final
+COPY --exclude=/html . .
 RUN python3 /app/manage.py collectstatic --noinput
-USER appuser
+# Enable mods as root
+RUN a2enmod status && a2enmod lbmethod_byrequests && a2enmod ssl && a2enmod rewrite
+RUN a2dissite 000-default.conf 
+RUN a2ensite intranet-backend.conf
+#USER appuser
 
 # Expose the port that the application listens on.
 EXPOSE 8001
 
 # Run the Apache2 instance.
-RUN a2enmod status && a2enmod lbmethod_byrequests && a2enmod ssl && a2enmod rewrite
-RUN a2dissite 000-default.conf 
-RUN a2ensite intranet-backend.conf
 CMD ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
